@@ -1,12 +1,16 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from app.services.openai_service import chat
-from app.services.document_service import extract_text_from_pdf, chunk_text
+from app.services.document_service import (
+    extract_text_from_pdf,
+    extract_text_from_url,
+    chunk_text
+)
 
 app = FastAPI(
     title="DocuChat",
     description="Chat with your documents and resumes using AI",
-    version="0.3.0"
+    version="0.4.0"
 )
 
 # In-memory store — holds the last uploaded document text
@@ -30,6 +34,14 @@ class UploadResponse(BaseModel):
     char_count: int
     preview: str        # first 200 chars so user can confirm it parsed correctly
 
+class UrlRequest(BaseModel):
+    url: str
+
+class UrlResponse(BaseModel):
+    doc_id: str
+    url: str
+    char_count: int
+    preview: str
 
 # ── Endpoints ─────────────────────────────────────────────────────
 @app.get("/")
@@ -69,6 +81,29 @@ async def upload_pdf(file: UploadFile = File(...)):
         preview=text[:200]
     )
 
+@app.post("/upload/url", response_model=UrlResponse)
+def upload_url(request: UrlRequest):
+    """Scrape a URL - returns a doc_id to use in /chat."""
+    if not request.url.startswith(("http://", "https://")):
+        raise HTTPException(
+            status_code=400,
+            detail="URL must start with http:// or https://"
+        )
+    try:
+        text = extract_text_from_url(request.url)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    
+    #use Url as doc_id
+    doc_id = request.url
+    document_store[doc_id] = chunk_text(text)
+
+    return UrlResponse(
+        doc_id=doc_id,
+        url=request.url,
+        char_count=len(text),
+        preview=text[:200]
+    )
 
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest):
