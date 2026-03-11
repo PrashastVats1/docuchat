@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 #Initialise the Open AI cient once here, resuse for all requests
-client = OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 SYSTEM_PROMPT = """You are DocuChat, a helpful AI assistant.
 You answer questions clearly and concisely.
