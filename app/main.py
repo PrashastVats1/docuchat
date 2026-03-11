@@ -13,15 +13,14 @@ app = FastAPI(
     version="0.4.0"
 )
 
-# In-memory store — holds the last uploaded document text
-# (simple for now; in production you'd use a database or session)
+# In-memory store — holds uploaded/scraped document text
 document_store: dict[str, str] = {}
 
 
 # ── Models ────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
-    doc_id: str = ""    # optional — reference a previously uploaded doc
+    doc_id: str = ""
 
 
 class ChatResponse(BaseModel):
@@ -32,16 +31,19 @@ class UploadResponse(BaseModel):
     doc_id: str
     filename: str
     char_count: int
-    preview: str        # first 200 chars so user can confirm it parsed correctly
+    preview: str
+
 
 class UrlRequest(BaseModel):
     url: str
+
 
 class UrlResponse(BaseModel):
     doc_id: str
     url: str
     char_count: int
     preview: str
+
 
 # ── Endpoints ─────────────────────────────────────────────────────
 @app.get("/")
@@ -70,7 +72,6 @@ async def upload_pdf(file: UploadFile = File(...)):
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    # Use filename as doc_id (simple, works fine for learning)
     doc_id = file.filename
     document_store[doc_id] = chunk_text(text)
 
@@ -81,20 +82,21 @@ async def upload_pdf(file: UploadFile = File(...)):
         preview=text[:200]
     )
 
+
 @app.post("/upload/url", response_model=UrlResponse)
 def upload_url(request: UrlRequest):
-    """Scrape a URL - returns a doc_id to use in /chat."""
+    """Scrape a URL — returns a doc_id to use in /chat."""
     if not request.url.startswith(("http://", "https://")):
         raise HTTPException(
             status_code=400,
             detail="URL must start with http:// or https://"
         )
+
     try:
         text = extract_text_from_url(request.url)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    
-    #use Url as doc_id
+
     doc_id = request.url
     document_store[doc_id] = chunk_text(text)
 
@@ -105,17 +107,17 @@ def upload_url(request: UrlRequest):
         preview=text[:200]
     )
 
+
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest):
     """
     Chat with optional document context.
     - No doc_id: general AI chat
-    - With doc_id: AI answers based on the uploaded document
+    - With doc_id: AI answers based on the uploaded document or scraped URL
     """
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
-    # Look up document context if a doc_id was provided
     context = ""
     if request.doc_id:
         if request.doc_id not in document_store:
