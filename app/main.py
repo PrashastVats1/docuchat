@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from app.services.openai_service import chat
 from app.services.document_service import (
@@ -10,10 +12,13 @@ from app.services.document_service import (
 app = FastAPI(
     title="DocuChat",
     description="Chat with your documents and resumes using AI",
-    version="0.4.0"
+    version="0.5.0"
 )
 
-# In-memory store — holds uploaded/scraped document text
+# Serve static files (CSS, JS)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# In-memory document store
 document_store: dict[str, str] = {}
 
 
@@ -48,12 +53,12 @@ class UrlResponse(BaseModel):
 # ── Endpoints ─────────────────────────────────────────────────────
 @app.get("/")
 def root():
-    return {"message": "DocuChat is running!", "status": "ok"}
+    return FileResponse("app/static/index.html")
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "version": "0.4.0"}
+    return {"status": "healthy", "version": "0.5.0"}
 
 
 @app.post("/upload/pdf", response_model=UploadResponse)
@@ -110,11 +115,7 @@ def upload_url(request: UrlRequest):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest):
-    """
-    Chat with optional document context.
-    - No doc_id: general AI chat
-    - With doc_id: AI answers based on the uploaded document or scraped URL
-    """
+    """Chat with optional document context."""
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
