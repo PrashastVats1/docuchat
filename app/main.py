@@ -53,7 +53,7 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": "0.4.0"}
 
 
 @app.post("/upload/pdf", response_model=UploadResponse)
