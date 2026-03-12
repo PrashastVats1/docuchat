@@ -14,32 +14,25 @@ pipeline {
         }
 
         stage('Setup Python') {
-        steps {
-            sh '''
-                python3 -m venv $VENV_DIR
-                . $VENV_DIR/bin/activate
-                 install --upgrade pip
-                pip install -r requirements.txt
-                pip install -r requirements-dev.txt
-            '''
-    }
-}
+            steps {
+                bat '''
+                    python -m venv .venv
+                    .venv\\Scripts\\activate.bat && pip install --upgrade pip
+                    .venv\\Scripts\\activate.bat && pip install -r requirements.txt
+                    .venv\\Scripts\\activate.bat && pip install -r requirements-dev.txt
+                '''
+            }
+        }
 
         stage('Lint') {
             steps {
-                sh '''
-                    . $VENV_DIR/bin/activate
-                    flake8 app/ --max-line-length=120 --statistics
-                '''
+                bat '.venv\\Scripts\\activate.bat && flake8 app/ --max-line-length=120 --statistics'
             }
         }
 
         stage('Test') {
             steps {
-                sh '''
-                    . $VENV_DIR/bin/activate
-                    pytest tests/ -v
-                '''
+                bat '.venv\\Scripts\\activate.bat && pytest tests/ -v'
             }
         }
     }
