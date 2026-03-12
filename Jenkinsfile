@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = '.venv'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -17,22 +13,22 @@ pipeline {
             steps {
                 bat '''
                     python -m venv .venv
-                    .venv\\Scripts\\activate.bat && pip install --upgrade pip
-                    .venv\\Scripts\\activate.bat && pip install -r requirements.txt
-                    .venv\\Scripts\\activate.bat && pip install -r requirements-dev.txt
+                    .venv\\Scripts\\python.exe -m pip install --upgrade pip
+                    .venv\\Scripts\\python.exe -m pip install -r requirements.txt
+                    .venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt
                 '''
             }
         }
 
         stage('Lint') {
             steps {
-                bat '.venv\\Scripts\\activate.bat && flake8 app/ --max-line-length=120 --statistics'
+                bat '.venv\\Scripts\\flake8.exe app/ --max-line-length=120 --statistics'
             }
         }
 
         stage('Test') {
             steps {
-                bat '.venv\\Scripts\\activate.bat && pytest tests/ -v'
+                bat '.venv\\Scripts\\pytest.exe tests/ -v'
             }
         }
     }
