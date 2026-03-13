@@ -6,11 +6,10 @@ from unittest.mock import patch, MagicMock
 
 client = TestClient(app)
 
-
 def test_root_returns_ok():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    assert "DocuChat" in response.text
 
 
 def test_health_check():

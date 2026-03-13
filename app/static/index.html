@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuChat — Chat with your documents</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🤖 DocuChat</h1>
+                <p>Chat with your documents and resumes using AI</p>
+            </div>
+        </header>
+
+        <main class="main">
+
+            <!-- Left Panel: Document Loader -->
+            <aside class="panel">
+                <h2>📄 Load a Document</h2>
+
+                <!-- PDF Upload -->
+                <div class="section">
+                    <h3>Upload PDF</h3>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="pdfInput" accept=".pdf" hidden>
+                        <button class="btn btn-secondary"
+                            onclick="document.getElementById('pdfInput').click()">
+                            Choose PDF file
+                        </button>
+                        <p class="hint">Resumes, reports, any PDF</p>
+                    </div>
+                </div>
+
+                <div class="divider">or</div>
+
+                <!-- URL Scraper -->
+                <div class="section">
+                    <h3>Paste a URL</h3>
+                    <input
+                        type="text"
+                        id="urlInput"
+                        class="input"
+                        placeholder="https://example.com/docs"
+                    >
+                    <button class="btn btn-secondary" onclick="loadUrl()">
+                        Load URL
+                    </button>
+                </div>
+
+                <!-- Document Status -->
+                <div class="doc-status" id="docStatus" style="display:none">
+                    <div class="status-badge">
+                        <span class="status-icon">✅</span>
+                        <div>
+                            <strong id="docName">document.pdf</strong>
+                            <p id="docInfo">1,234 characters loaded</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost" onclick="clearDocument()">
+                        ✕ Clear
+                    </button>
+                </div>
+
+                <!-- No Document Mode -->
+                <div class="no-doc-notice" id="noDocNotice">
+                    <p>💬 No document loaded — chatting in general mode</p>
+                </div>
+            </aside>
+
+            <!-- Right Panel: Chat -->
+            <section class="chat-panel">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <h3>👋 Welcome to DocuChat!</h3>
+                        <p>Load a document on the left, then ask me anything about it.</p>
+                        <p>Or just chat without a document for general AI assistance.</p>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="chat-input-row">
+                        <textarea
+                            id="messageInput"
+                            class="chat-input"
+                            placeholder="Ask something about your document..."
+                            rows="1"
+                            onkeydown="handleKeyDown(event)"
+                        ></textarea>
+                        <button class="btn btn-primary send-btn"
+                            id="sendBtn" onclick="sendMessage()">
+                            Send ➤
+                        </button>
+                    </div>
+                    <p class="input-hint" id="inputHint">
+                        Press Enter to send, Shift+Enter for new line
+                    </p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display:none">
+        <div class="spinner"></div>
+        <p id="loadingText">Loading document...</p>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
