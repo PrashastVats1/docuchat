@@ -41,8 +41,8 @@ pipeline {
                 branch 'main'
             }
             steps {
-                bat 'docker build -t docuchat:latest .'
-                echo 'Docker image built successfully!'
+                echo 'Docker build happens on Linux VM — skipping on Windows Jenkins agent.'
+                echo 'Run: git pull && sudo docker compose up -d --build on the VM to deploy.'
             }
         }
     }
