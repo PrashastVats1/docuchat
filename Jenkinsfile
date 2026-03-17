@@ -35,6 +35,16 @@ pipeline {
                 bat '.venv\\Scripts\\pytest.exe tests/ -v'
             }
         }
+
+        stage('Build Docker Image') {
+            when {
+                branch 'main'
+            }
+            steps {
+                bat 'docker build -t docuchat:latest .'
+                echo 'Docker image built successfully!'
+            }
+        }
     }
 
     post {
