@@ -25,7 +25,7 @@ document_store: dict[str, str] = {}
 # ── Models ────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
-    doc_id: str = ""
+    doc_ids: list[str] = []
     history: list = []
 
 
@@ -120,13 +120,16 @@ def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
     context = ""
-    if request.doc_id:
-        if request.doc_id not in document_store:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Document '{request.doc_id}' not found. Please upload it first."
-            )
-        context = document_store[request.doc_id]
+    if request.doc_ids:
+        contexts = []
+        for doc_id in request.doc_ids:
+            if doc_id not in document_store:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Document '{doc_id}' not found. Please upload it first."
+                )
+            contexts.append(f"--- Document: {doc_id} ---\n{document_store[doc_id]}")
+        context = "\n\n".join(contexts)
 
     reply = chat(
         user_message=request.message,

@@ -256,3 +256,81 @@ body {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #2a2f45; border-radius: 3px; }
+
+/* ── Multiple Documents ───────────────────────────────── */
+.docs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.docs-header h3 { font-size: 0.85rem; color: #aaa; }
+
+.docs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.doc-item {
+    background: #1a2a1a;
+    border: 1px solid #2d5a2d;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.doc-item-info { flex: 1; overflow: hidden; }
+.doc-item-info strong {
+    font-size: 0.82rem;
+    color: #90ee90;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.doc-item-info span {
+    font-size: 0.72rem;
+    color: #666;
+}
+
+.btn-danger {
+    background: transparent;
+    color: #ff6b6b;
+    border: 1px solid #ff6b6b;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+}
+.btn-danger:hover { background: #ff6b6b22; }
+
+/* ── Warning Modal ────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal {
+    background: #1a1f2e;
+    border: 1px solid #2a2f45;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+}
+
+.modal h3 { color: #ff6b6b; margin-bottom: 12px; }
+.modal p  { color: #aaa; font-size: 0.9rem; margin-bottom: 20px; }
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
