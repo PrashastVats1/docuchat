@@ -154,3 +154,13 @@ def test_url_then_chat():
 
         assert response.status_code == 200
         assert "Python" in response.json()["reply"]
+
+def test_preview_endpoint():
+    """Preview endpoint should return first 500 chars of a loaded document."""
+    from app.main import document_store
+    document_store["preview-test.pdf"] = "A" * 600
+
+    response = client.get("/preview/preview-test.pdf")
+    assert response.status_code == 200
+    assert len(response.json()["preview"]) == 500
+    assert response.json()["char_count"] == 600

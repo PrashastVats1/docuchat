@@ -1,6 +1,26 @@
 // ── State ──────────────────────────────────────────────
-let loadedDocs = []; // [{ id, name, charCount }]
+let loadedDocs = []; // [{ id, name, charCount, preview }]
 let chatHistory = [];
+
+// ── Toast Notifications ────────────────────────────────
+function showToast(message, type = "info", duration = 4000) {
+  const container = document.getElementById("toastContainer");
+  const icons = { error: "❌", success: "✅", info: "ℹ️" };
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+  toast.onclick = () => dismissToast(toast);
+
+  container.appendChild(toast);
+
+  setTimeout(() => dismissToast(toast), duration);
+}
+
+function dismissToast(toast) {
+  toast.style.animation = "slideOut 0.3s ease forwards";
+  setTimeout(() => toast.remove(), 300);
+}
 
 // ── Document Loading ───────────────────────────────────
 document.getElementById("pdfInput").addEventListener("change", async (e) => {
@@ -20,12 +40,13 @@ document.getElementById("pdfInput").addEventListener("change", async (e) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Upload failed");
 
-    addDoc(data.doc_id, data.filename, data.char_count);
+    await addDoc(data.doc_id, data.filename, data.char_count);
     addSystemMessage(
       `📄 Loaded ${data.filename} (${data.char_count.toLocaleString()} chars)`,
     );
+    showToast(`${data.filename} loaded successfully!`, "success");
   } catch (err) {
-    addSystemMessage(`❌ ${friendlyError(err.message)}`, "error");
+    showToast(friendlyError(err.message), "error");
   } finally {
     hideLoading();
     e.target.value = "";
@@ -35,11 +56,11 @@ document.getElementById("pdfInput").addEventListener("change", async (e) => {
 async function loadUrl() {
   const url = document.getElementById("urlInput").value.trim();
   if (!url) {
-    addSystemMessage("❌ Please enter a URL first.", "error");
+    showToast("Please enter a URL first.", "error");
     return;
   }
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    addSystemMessage("❌ URL must start with http:// or https://", "error");
+    showToast("URL must start with http:// or https://", "error");
     return;
   }
 
@@ -54,27 +75,37 @@ async function loadUrl() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Failed to load URL");
 
-    addDoc(data.doc_id, url, data.char_count);
+    await addDoc(data.doc_id, url, data.char_count);
     addSystemMessage(
       `🌐 Loaded ${shortenUrl(url)} (${data.char_count.toLocaleString()} chars)`,
     );
+    showToast(`${shortenUrl(url)} loaded successfully!`, "success");
     document.getElementById("urlInput").value = "";
   } catch (err) {
-    addSystemMessage(`❌ ${friendlyError(err.message)}`, "error");
+    showToast(friendlyError(err.message), "error");
   } finally {
     hideLoading();
   }
 }
 
 // ── Document Management ────────────────────────────────
-function addDoc(id, name, charCount) {
-  // Prevent duplicates
+async function addDoc(id, name, charCount) {
   if (loadedDocs.find((d) => d.id === id)) {
-    addSystemMessage(`⚠️ ${name} is already loaded.`, "error");
+    showToast(`${name} is already loaded.`, "info");
     return;
   }
 
-  loadedDocs.push({ id, name, charCount });
+  // Fetch preview
+  let preview = "";
+  try {
+    const res = await fetch(`/preview/${encodeURIComponent(id)}`);
+    const data = await res.json();
+    preview = data.preview || "";
+  } catch {
+    preview = "Preview unavailable.";
+  }
+
+  loadedDocs.push({ id, name, charCount, preview });
   renderDocsList();
   updatePlaceholder();
 }
@@ -83,11 +114,43 @@ function removeDoc(id) {
   loadedDocs = loadedDocs.filter((d) => d.id !== id);
   renderDocsList();
   updatePlaceholder();
-  addSystemMessage(`🗑️ Document removed — chat continues.`);
+  showToast("Document removed.", "info");
+  addSystemMessage("🗑️ Document removed — chat continues.");
+}
+
+async function showPreview(id) {
+  const doc = loadedDocs.find((d) => d.id === id);
+  if (!doc) return;
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.id = "previewModal";
+  modal.innerHTML = `
+        <div class="modal" style="max-width: 600px; width: 90%; text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="preview-modal-title">
+                    ${doc.name.startsWith("http") ? "🌐" : "📄"} ${escapeHtml(shortenName(doc.name))}
+                </span>
+                <button class="btn btn-ghost" onclick="closePreviewModal()">✕</button>
+            </div>
+            <p style="font-size:0.75rem; color:#555; margin-top:4px;">
+                First 500 characters of ${doc.charCount.toLocaleString()} total
+            </p>
+            <div class="preview-modal-body">${escapeHtml(doc.preview)}</div>
+        </div>
+    `;
+  modal.onclick = (e) => {
+    if (e.target === modal) closePreviewModal();
+  };
+  document.body.appendChild(modal);
+}
+
+function closePreviewModal() {
+  const modal = document.getElementById("previewModal");
+  if (modal) modal.remove();
 }
 
 function confirmClearAll() {
-  // Show warning modal
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
   modal.id = "clearModal";
@@ -116,7 +179,6 @@ function clearAll() {
   renderDocsList();
   updatePlaceholder();
 
-  // Clear chat messages
   const container = document.getElementById("chatMessages");
   container.innerHTML = `
         <div class="welcome-message">
@@ -125,7 +187,7 @@ function clearAll() {
             <p>Or just chat without a document for general AI assistance.</p>
         </div>
     `;
-  addSystemMessage("🗑️ All documents cleared and chat history reset.");
+  showToast("All documents cleared and chat reset.", "info");
 }
 
 function renderDocsList() {
@@ -149,18 +211,26 @@ function renderDocsList() {
   list.innerHTML = loadedDocs
     .map(
       (doc) => `
-        <div class="doc-item">
+    <div class="doc-item" id="doc-item-${CSS.escape(doc.id)}">
+        <div class="doc-item-header">
             <div class="doc-item-info">
-                <strong title="${doc.name}">
-                    ${doc.name.startsWith("http") ? "🌐" : "📄"} ${shortenName(doc.name)}
+                <strong title="${escapeHtml(doc.name)}">
+                    ${doc.name.startsWith("http") ? "🌐" : "📄"} ${escapeHtml(shortenName(doc.name))}
                 </strong>
                 <span>${doc.charCount.toLocaleString()} chars</span>
             </div>
-            <button class="btn btn-ghost"
-                onclick="removeDoc('${escapeAttr(doc.id)}')"
-                title="Remove document">✕</button>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <button class="btn btn-preview"
+                    onclick="showPreview('${escapeAttr(doc.id)}')">
+                    Preview
+                </button>
+                <button class="btn btn-ghost"
+                    onclick="removeDoc('${escapeAttr(doc.id)}')"
+                    title="Remove document">✕</button>
+            </div>
         </div>
-    `,
+    </div>
+`,
     )
     .join("");
 }
@@ -208,6 +278,7 @@ async function sendMessage() {
     chatHistory.push({ user: message, assistant: data.reply });
   } catch (err) {
     removeThinking(thinkingId);
+    showToast(friendlyError(err.message), "error");
     addMessage("assistant", `❌ ${friendlyError(err.message)}`);
   } finally {
     sendBtn.disabled = false;
@@ -284,7 +355,7 @@ function friendlyError(msg) {
   if (msg.includes("HTTP 4"))
     return "Could not access that URL. It may be restricted.";
   if (msg.includes("Could not reach"))
-    return "Could not reach that URL. Check your connection.";
+    return "Could not reach that URL. Check the address.";
   return msg;
 }
 
