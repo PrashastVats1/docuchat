@@ -164,3 +164,4 @@ def test_preview_endpoint():
     assert response.status_code == 200
     assert len(response.json()["preview"]) == 500
     assert response.json()["char_count"] == 600
+    
