@@ -43,13 +43,15 @@ def test_chat_returns_reply():
 
 
 def test_chat_with_context():
-    """Context should be passed through to the AI."""
+    from app.main import document_store
+    document_store["test-doc"] = "This is a sample document about Python."
+
     with patch("app.services.openai_service.client.chat.completions.create") as mock_create:
         mock_create.return_value.choices[0].message.content = "Based on the document, the answer is X."
 
         response = client.post("/chat", json={
             "message": "Summarise this for me",
-            "context": "This is a sample document about Python."
+            "doc_ids": ["test-doc"]
         })
 
         assert response.status_code == 200
@@ -98,10 +100,9 @@ def test_upload_valid_pdf():
 
 
 def test_chat_with_unknown_doc_id():
-    """Referencing a doc that was never uploaded should return 404."""
     response = client.post("/chat", json={
-        "message": "Summarise this",
-        "doc_id": "nonexistent.pdf"
+        "message": "hello",
+        "doc_ids": ["nonexistent.pdf"]   # ← list now
     })
     assert response.status_code == 404
 
@@ -148,7 +149,7 @@ def test_url_then_chat():
 
         response = client.post("/chat", json={
             "message": "What is this page about?",
-            "doc_id": "https://test.com"
+            "doc_ids": ["https://test.com"]   # ← list now
         })
 
         assert response.status_code == 200

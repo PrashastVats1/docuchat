@@ -21,9 +21,9 @@
 
             <!-- Left Panel: Document Loader -->
             <aside class="panel">
-                <h2>📄 Load a Document</h2>
+                <h2>📄 Documents</h2>
 
-                <!-- PDF Upload -->
+                <!-- Upload Controls -->
                 <div class="section">
                     <h3>Upload PDF</h3>
                     <div class="upload-area" id="uploadArea">
@@ -38,7 +38,6 @@
 
                 <div class="divider">or</div>
 
-                <!-- URL Scraper -->
                 <div class="section">
                     <h3>Paste a URL</h3>
                     <input
@@ -52,23 +51,22 @@
                     </button>
                 </div>
 
-                <!-- Document Status -->
-                <div class="doc-status" id="docStatus" style="display:none">
-                    <div class="status-badge">
-                        <span class="status-icon">✅</span>
-                        <div>
-                            <strong id="docName">document.pdf</strong>
-                            <p id="docInfo">1,234 characters loaded</p>
-                        </div>
-                    </div>
-                    <button class="btn btn-ghost" onclick="clearDocument()">
-                        ✕ Clear
+                <div class="divider"></div>
+
+                <!-- Loaded Documents List -->
+                <div class="docs-header">
+                    <h3 id="docsCount">No documents loaded</h3>
+                    <button class="btn btn-danger" id="clearAllBtn"
+                        onclick="confirmClearAll()" style="display:none">
+                        🗑️ Clear All
                     </button>
                 </div>
 
+                <div id="docsList" class="docs-list"></div>
+
                 <!-- No Document Mode -->
                 <div class="no-doc-notice" id="noDocNotice">
-                    <p>💬 No document loaded — chatting in general mode</p>
+                    <p>💬 No documents loaded — chatting in general mode</p>
                 </div>
             </aside>
 
