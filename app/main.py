@@ -26,6 +26,7 @@ document_store: dict[str, str] = {}
 class ChatRequest(BaseModel):
     message: str
     doc_id: str = ""
+    history: list = []
 
 
 class ChatResponse(BaseModel):
@@ -115,7 +116,6 @@ def upload_url(request: UrlRequest):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest):
-    """Chat with optional document context."""
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
@@ -128,5 +128,9 @@ def chat_endpoint(request: ChatRequest):
             )
         context = document_store[request.doc_id]
 
-    reply = chat(user_message=request.message, context=context)
+    reply = chat(
+        user_message=request.message,
+        context=context,
+        history=request.history
+    )
     return ChatResponse(reply=reply)

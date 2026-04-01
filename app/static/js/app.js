@@ -1,5 +1,6 @@
 // ── State ──────────────────────────────────────────────
 let currentDocId = null;
+let chatHistory = []; // ← NEW
 
 // ── Document Loading ───────────────────────────────────
 document.getElementById("pdfInput").addEventListener("change", async (e) => {
@@ -76,6 +77,7 @@ function setDocument(docId, name, charCount) {
 
 function clearDocument() {
   currentDocId = null;
+  chatHistory = []; // ← NEW - reset history on doc clear
   document.getElementById("docStatus").style.display = "none";
   document.getElementById("noDocNotice").style.display = "block";
   document.getElementById("messageInput").placeholder =
@@ -92,13 +94,9 @@ async function sendMessage() {
   input.value = "";
   autoResize(input);
 
-  // Show user message
   addMessage("user", message);
-
-  // Show thinking indicator
   const thinkingId = addThinking();
 
-  // Disable send button
   const sendBtn = document.getElementById("sendBtn");
   sendBtn.disabled = true;
 
@@ -109,6 +107,7 @@ async function sendMessage() {
       body: JSON.stringify({
         message,
         doc_id: currentDocId || "",
+        history: chatHistory, // ← NEW
       }),
     });
     const data = await res.json();
@@ -117,6 +116,9 @@ async function sendMessage() {
 
     removeThinking(thinkingId);
     addMessage("assistant", data.reply);
+
+    // Save to history ← NEW
+    chatHistory.push({ user: message, assistant: data.reply });
   } catch (err) {
     removeThinking(thinkingId);
     addMessage("assistant", `❌ Error: ${err.message}`);
