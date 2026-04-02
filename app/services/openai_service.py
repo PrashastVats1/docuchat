@@ -1,15 +1,13 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
+from prompts import RESUME_SYSTEM_PROMPT
 
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-SYSTEM_PROMPT = """You are DocuChat, a helpful AI assistant.
-You answer questions clearly and concisely.
-If you are given document context, base your answers on that context.
-If the answer is not in the context, say so honestly."""
+SYSTEM_PROMPT = RESUME_SYSTEM_PROMPT
 
 
 def chat(user_message: str, context: str = "", history: list = None) -> str:
