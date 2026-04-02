@@ -1,6 +1,44 @@
 // ── State ──────────────────────────────────────────────
-let loadedDocs = []; // [{ id, name, charCount, preview }]
+let loadedDocs = [];
 let chatHistory = [];
+let panelOpen = false;
+
+// ── Panel Toggle ───────────────────────────────────────
+function togglePanel() {
+  const panel = document.getElementById("sidePanel");
+  const backdrop = document.getElementById("panelBackdrop");
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    panelOpen = !panelOpen;
+    panel.classList.toggle("open", panelOpen);
+    backdrop.classList.toggle("visible", panelOpen);
+  } else {
+    panelOpen = !panelOpen;
+    panel.classList.toggle("hidden-desktop", !panelOpen);
+  }
+}
+
+// Start with panel open on desktop, closed on mobile
+window.addEventListener("load", () => {
+  const isMobile = window.innerWidth <= 768;
+  if (!isMobile) {
+    panelOpen = true;
+  }
+});
+
+// Close panel on mobile when window resizes to desktop
+window.addEventListener("resize", () => {
+  const isMobile = window.innerWidth <= 768;
+  const panel = document.getElementById("sidePanel");
+  const backdrop = document.getElementById("panelBackdrop");
+
+  if (!isMobile) {
+    panel.classList.remove("open");
+    backdrop.classList.remove("visible");
+    if (panelOpen) panel.classList.remove("hidden-desktop");
+  }
+});
 
 // ── Toast Notifications ────────────────────────────────
 function showToast(message, type = "info", duration = 4000) {
@@ -52,41 +90,6 @@ document.getElementById("pdfInput").addEventListener("change", async (e) => {
     e.target.value = "";
   }
 });
-
-async function loadUrl() {
-  const url = document.getElementById("urlInput").value.trim();
-  if (!url) {
-    showToast("Please enter a URL first.", "error");
-    return;
-  }
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    showToast("URL must start with http:// or https://", "error");
-    return;
-  }
-
-  showLoading("Scraping website...");
-
-  try {
-    const res = await fetch("/upload/url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to load URL");
-
-    await addDoc(data.doc_id, url, data.char_count);
-    addSystemMessage(
-      `🌐 Loaded ${shortenUrl(url)} (${data.char_count.toLocaleString()} chars)`,
-    );
-    showToast(`${shortenUrl(url)} loaded successfully!`, "success");
-    document.getElementById("urlInput").value = "";
-  } catch (err) {
-    showToast(friendlyError(err.message), "error");
-  } finally {
-    hideLoading();
-  }
-}
 
 // ── Document Management ────────────────────────────────
 async function addDoc(id, name, charCount) {
