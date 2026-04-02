@@ -62,6 +62,14 @@ def health_check():
     return {"status": "healthy", "version": "0.5.0"}
 
 
+@app.get("/preview/{doc_id:path}")
+def get_preview(doc_id: str):
+    if doc_id not in document_store:
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
+    text = document_store[doc_id]
+    return {"doc_id": doc_id, "preview": text[:500], "char_count": len(text)}
+
+
 @app.post("/upload/pdf", response_model=UploadResponse)
 async def upload_pdf(file: UploadFile = File(...)):
     """Upload a PDF — returns a doc_id to use in /chat."""
