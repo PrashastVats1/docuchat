@@ -25,6 +25,12 @@ window.addEventListener("load", () => {
   if (!isMobile) {
     panelOpen = true;
   }
+
+  // Hide keyboard hint on mobile
+  const hint = document.querySelector(".input-hint");
+  if (hint) {
+    hint.style.display = isMobile ? "none" : "block";
+  }
 });
 
 // Close panel on mobile when window resizes to desktop
@@ -32,6 +38,9 @@ window.addEventListener("resize", () => {
   const isMobile = window.innerWidth <= 768;
   const panel = document.getElementById("sidePanel");
   const backdrop = document.getElementById("panelBackdrop");
+  const hint = document.querySelector(".input-hint");
+
+  if (hint) hint.style.display = isMobile ? "none" : "block";
 
   if (!isMobile) {
     panel.classList.remove("open");
