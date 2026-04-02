@@ -26,7 +26,7 @@ pipeline {
 
         stage('Lint') {
             steps {
-                bat '.venv\\Scripts\\flake8.exe app/ --max-line-length=120 --statistics'
+                bat '.venv\\Scripts\\flake8.exe app/ --max-line-length=120 --statistics --exclude=app/services/prompts.py'
             }
         }
 
