@@ -4,26 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocuChat — Chat with your documents</title>
+    <!-- Add this line: -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
     <div class="app">
 
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>🤖 DocuChat</h1>
-                <p>Chat with your documents and resumes using AI</p>
+                <button class="menu-toggle" id="menuToggle" onclick="togglePanel()">☰</button>
+                <div>
+                    <h1>🤖 DocuChat</h1>
+                    <p>Chat with your documents and resumes using AI</p>
+                </div>
             </div>
         </header>
 
-        <main class="main">
+        <main class="main" id="mainContent">
 
-            <!-- Left Panel: Document Loader -->
-            <aside class="panel">
-                <h2>📄 Documents</h2>
+            <!-- Backdrop for mobile -->
+            <div class="panel-backdrop" id="panelBackdrop" onclick="togglePanel()"></div>
 
-                <!-- Upload Controls -->
+            <!-- Left Panel -->
+            <aside class="panel" id="sidePanel">
+                <div class="panel-header">
+                    <h2>📄 Documents</h2>
+                    <button class="btn btn-ghost panel-close" onclick="togglePanel()">✕</button>
+                </div>
+
                 <div class="section">
                     <h3>Upload PDF</h3>
                     <div class="upload-area" id="uploadArea">
@@ -36,24 +47,8 @@
                     </div>
                 </div>
 
-                <div class="divider">or</div>
-
-                <div class="section">
-                    <h3>Paste a URL</h3>
-                    <input
-                        type="text"
-                        id="urlInput"
-                        class="input"
-                        placeholder="https://example.com/docs"
-                    >
-                    <button class="btn btn-secondary" onclick="loadUrl()">
-                        Load URL
-                    </button>
-                </div>
-
                 <div class="divider"></div>
 
-                <!-- Loaded Documents List -->
                 <div class="docs-header">
                     <h3 id="docsCount">No documents loaded</h3>
                     <button class="btn btn-danger" id="clearAllBtn"
@@ -64,18 +59,17 @@
 
                 <div id="docsList" class="docs-list"></div>
 
-                <!-- No Document Mode -->
                 <div class="no-doc-notice" id="noDocNotice">
                     <p>💬 No documents loaded — chatting in general mode</p>
                 </div>
             </aside>
 
             <!-- Right Panel: Chat -->
-            <section class="chat-panel">
+            <section class="chat-panel" id="chatPanel">
                 <div class="chat-messages" id="chatMessages">
                     <div class="welcome-message">
                         <h3>👋 Welcome to DocuChat!</h3>
-                        <p>Load a document on the left, then ask me anything about it.</p>
+                        <p>Click ☰ to load a document, then ask me anything about it.</p>
                         <p>Or just chat without a document for general AI assistance.</p>
                     </div>
                 </div>
@@ -85,7 +79,7 @@
                         <textarea
                             id="messageInput"
                             class="chat-input"
-                            placeholder="Ask something about your document..."
+                            placeholder="Ask something..."
                             rows="1"
                             onkeydown="handleKeyDown(event)"
                         ></textarea>
@@ -94,9 +88,7 @@
                             Send ➤
                         </button>
                     </div>
-                    <p class="input-hint" id="inputHint">
-                        Press Enter to send, Shift+Enter for new line
-                    </p>
+                    <p class="input-hint">Press Enter to send, Shift+Enter for new line</p>
                 </div>
             </section>
 

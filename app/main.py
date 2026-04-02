@@ -5,24 +5,20 @@ from pydantic import BaseModel
 from app.services.openai_service import chat
 from app.services.document_service import (
     extract_text_from_pdf,
-    extract_text_from_url,
     chunk_text
 )
 
 app = FastAPI(
     title="DocuChat",
     description="Chat with your documents and resumes using AI",
-    version="0.5.0"
+    version="0.6.0"
 )
 
-# Serve static files (CSS, JS)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# In-memory document store
 document_store: dict[str, str] = {}
 
 
-# ── Models ────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
     doc_ids: list[str] = []
@@ -40,18 +36,6 @@ class UploadResponse(BaseModel):
     preview: str
 
 
-class UrlRequest(BaseModel):
-    url: str
-
-
-class UrlResponse(BaseModel):
-    doc_id: str
-    url: str
-    char_count: int
-    preview: str
-
-
-# ── Endpoints ─────────────────────────────────────────────────────
 @app.get("/")
 def root():
     return FileResponse("app/static/index.html")
@@ -59,22 +43,14 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "version": "0.5.0"}
-
-
-@app.get("/preview/{doc_id:path}")
-def get_preview(doc_id: str):
-    if doc_id not in document_store:
-        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
-    text = document_store[doc_id]
-    return {"doc_id": doc_id, "preview": text[:500], "char_count": len(text)}
+    return {"status": "healthy", "version": "0.6.0"}
 
 
 @app.post("/upload/pdf", response_model=UploadResponse)
 async def upload_pdf(file: UploadFile = File(...)):
-    """Upload a PDF — returns a doc_id to use in /chat."""
     if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
+        raise HTTPException(
+            status_code=400, detail="Only PDF files are accepted.")
 
     file_bytes = await file.read()
 
@@ -93,32 +69,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         doc_id=doc_id,
         filename=file.filename,
         char_count=len(text),
-        preview=text[:200]
-    )
-
-
-@app.post("/upload/url", response_model=UrlResponse)
-def upload_url(request: UrlRequest):
-    """Scrape a URL — returns a doc_id to use in /chat."""
-    if not request.url.startswith(("http://", "https://")):
-        raise HTTPException(
-            status_code=400,
-            detail="URL must start with http:// or https://"
-        )
-
-    try:
-        text = extract_text_from_url(request.url)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    doc_id = request.url
-    document_store[doc_id] = chunk_text(text)
-
-    return UrlResponse(
-        doc_id=doc_id,
-        url=request.url,
-        char_count=len(text),
-        preview=text[:200]
+        preview=text[:500]
     )
 
 
@@ -136,7 +87,8 @@ def chat_endpoint(request: ChatRequest):
                     status_code=404,
                     detail=f"Document '{doc_id}' not found. Please upload it first."
                 )
-            contexts.append(f"--- Document: {doc_id} ---\n{document_store[doc_id]}")
+            contexts.append(
+                f"--- Document: {doc_id} ---\n{document_store[doc_id]}")
         context = "\n\n".join(contexts)
 
     reply = chat(
@@ -145,3 +97,12 @@ def chat_endpoint(request: ChatRequest):
         history=request.history
     )
     return ChatResponse(reply=reply)
+
+
+@app.get("/preview/{doc_id:path}")
+def get_preview(doc_id: str):
+    if doc_id not in document_store:
+        raise HTTPException(
+            status_code=404, detail=f"Document '{doc_id}' not found.")
+    text = document_store[doc_id]
+    return {"doc_id": doc_id, "preview": text[:500], "char_count": len(text)}
